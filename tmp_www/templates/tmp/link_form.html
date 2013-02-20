@@ -1,0 +1,135 @@
+{% extends 'tmp/base.html' %}
+{% load i18n %}
+{% load url from future %}
+
+{% block head_style %}
+<style>
+.custom-form input[class*="span"] {
+    width: 146px;
+}
+.center {
+  text-align:center;
+}
+.custom-form input[class*="span"], select[class*="span"] {
+  margin-bottom:10px;
+  width: 98%;
+}
+.custom-form.span8 {
+  width: 548px;
+}
+
+input.short-link {
+  display: none;
+  background-color: whitesmoke;
+  border: none;
+  color: #15C;
+  font-size: 21px;
+  font-weight: bold;
+  height: 40px;
+  text-align: center;
+}
+</style>
+{% endblock %}
+
+{% block head_script %}
+<script src="{{ STATIC_URL }}tmp/scripts/jquery.validate.js"></script>
+<script type="text/javascript">
+    var HTTP_ERROR_CODES = [400, 401, 403, 409, 422, 503],
+        base_ajax_options = {
+            url: "",
+            type: "POST",
+            data: {},
+            dataType: "json",
+            success: function (data) { }
+        };
+
+    function getLinkForm() {
+        return $("#link-form");
+    }
+
+    function onLinkError(xhr) {
+        if (HTTP_ERROR_CODES.indexOf(xhr.status) !== -1) {
+            var data = $.parseJSON(xhr.responseText), err, field, x;
+            if (typeof data.errors !== 'undefined') {
+                // TODO: display errors
+                for(x = 0; x < data.errors.length; x++) {
+                    err = data.errors[x];
+                    field = err[0];
+                    $("[name=:1]".replace(/:1/g, field)).closest('.control-group').addClass('error');
+                    console.log(err);
+                }
+            }
+            // notify(data.message, data.level);
+        } else {
+            // error(xhr.responseText);
+        }
+    };
+
+    function createLink(extra_options) {
+        var options = $.extend({}, base_ajax_options, {
+            url: "{% url 'tmp_link_api_shorten' %}",
+            type: "POST",
+            data: getLinkForm().serialize(),
+            error: function (xhr) {
+                onLinkError(xhr);
+            },
+            success: function(data) {
+                $("#id_target_url").val(data.link.target_url);
+                $("input.short-link").val(data.link.url);
+                if ($("input.short-link").val()) {
+                    $("input.short-link").show().select();
+                }
+            }
+        }, extra_options);
+        $.ajax(options);
+    }
+</script>
+{% endblock %}
+
+{% block document_ready_functions %}
+  getLinkForm().submit(function (event) {
+      event.preventDefault();
+      createLink();
+  });
+  getLinkForm().validate({
+      rules: {
+          target_url: "url"
+      },
+      {% comment %}
+      // jQuery Validate with Twitter Bootstrap styles (http://goo.gl/ZHNQY).
+      {% endcomment %}
+      highlight: function (label) {
+          $(label).closest('.control-group').addClass('error');
+      },
+      success: function (label) {
+          $(label).closest('.control-group').removeClass('error');
+      }
+  });
+
+  $("#id_target_url").focus();
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="row offset3 span6">
+    <form method="post" id="link-form" class="well custom-form"> {% csrf_token %}
+        <div class="control-group">
+          <label>{{ form.target_url.label }}:</label>
+          <input id="id_target_url" type="text" name="target_url" value="{{ form.target_url.value|default:'' }}" maxlength="200" class="span5" placeholder="{% trans 'Paste your URL here' %}" tabindex="1">
+        </div>
+        <div class="control-group">
+          <label>{{ form.duration.label }}:</label> {{ form.duration }}
+        </div>
+        <div class="control-group">
+          {% if request.user.is_authenticated %}
+          <label class="checkbox">{{ form.is_public }} {{ form.is_public.label }}</label>
+          {% endif %}
+        </div>
+        <div class="form-actions center">
+          <button type="submit" id="create-link" class="btn btn-large btn-primary" tabindex="2">{% trans 'Create Your Link' %}</button>
+        </div>
+    </form>
+    <input class="short-link span6" readonly="readonly" type="text" value="" tabindex="3">
+  </div>
+</div>
+{% endblock %}

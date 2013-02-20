@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>{{ site_name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <link href="{{ STATIC_URL }}tmp/styles/bootstrap.css" rel="stylesheet">
+    <style>
+      body {
+        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+      }
+    </style>
+    <link href="{{ STATIC_URL }}tmp/styles/bootstrap-responsive.css" rel="stylesheet">
+    {% block head_style %}{% endblock %}
+
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <link rel="shortcut icon" href="{{ STATIC_URL }}tmp/images/favicon.ico">
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="{{ STATIC_URL }}tmp/images/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{ STATIC_URL }}tmp/images/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{ STATIC_URL }}tmp/images/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="{{ STATIC_URL }}tmp/images/apple-touch-icon-57-precomposed.png">
+  </head>
+
+  <body>
+    <div class="container">
+      {% if messages %}
+        {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+          {{ message }}
+        </div>
+        {% endfor %}
+      {% endif %}
+      {% block content %}{% endblock %}
+    </div>
+
+    <script src="{{ STATIC_URL }}tmp/scripts/jquery.js"></script>
+    <script src="{{ STATIC_URL }}tmp/scripts/bootstrap.js"></script>
+    {% block head_script %}{% endblock %}
+    <script type="text/javascript">
+      var $ = jQuery.noConflict();
+      $(document).ready(function() {
+        $.ajaxSetup({
+          data: {csrfmiddlewaretoken: '{{ csrf_token }}' }
+        });
+        {% block document_ready_functions %}{% endblock %}
+      });
+    </script>
+
+  </body>
+</html>
